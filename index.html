@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>WFS</title>
+    <link rel="stylesheet" href="https://openlayers.org/en/v3.20.1/css/ol.css" type="text/css">
+    <!-- The line below is only needed for old environments like Internet Explorer and Android 4.x -->
+    <script src="https://openlayers.org/en/v3.20.1/build/ol.js"></script>
+  </head>
+  <body>
+    <div id="map" class="map"></div>
+    <script>
+	
+      var vectorSource = new ol.source.Vector({
+        format: new ol.format.GeoJSON(),
+        url: function(extent) {
+		
+		  return 'https://ahocevar.com/geoserver/wfs?service=WFS&' +
+              'version=1.1.0&request=GetFeature&typename=osm:water_areas&' +
+              'outputFormat=application/json&srsname=EPSG:3857&' +
+              'bbox=' + extent.join(',') + ',EPSG:3857';
+		/*	  
+		  return 'http://localhost:8080/geoserver/urban_area/ows?service=WFS&' +
+              'version=1.0.0&request=GetFeature&typename=urban_area:ne_10m_urban_areas&' +
+              'outputFormat=application/json&srsname=EPSG:3857&' +
+              'bbox=' + extent.join(',') + ',EPSG:3857';
+		*/	
+        },
+		//strategy: ol.loadingstrategy.fixed
+        //strategy: ol.loadingstrategy.all
+		//strategy: ol.loadingstrategy.bbox
+		strategy: new ol.loadingstrategy.tile(ol.tilegrid.createXYZ({}))
+      });
+	    window.loadFeatures = function(response) {
+		geoJSON = new ol.format.GeoJSON();
+		sourceVector.addFeatures(geoJSON.readFeatures(response));
+		};
+	 
+      var vector = new ol.layer.Vector({
+        source: vectorSource,
+		minResolution: 20,
+          maxResolution: 200,
+        style: new ol.style.Style({
+          stroke: new ol.style.Stroke({
+            color: 'rgba(0, 0, 255, 0.3)',
+            width: 1.5
+          })
+        })
+      });
+      var raster = new ol.layer.Tile({
+        source: new ol.source.BingMaps({
+          imagerySet: 'Aerial',
+          key: 'Aieq2G0ZLVBz2YWAcBMq2fLpHzn5ZACQUkAibfZrJElDPARB9Qg2phqN_5yvJfeO'
+        })
+      });
+	 
+	  var maxExtent = [-150.00,40.66,-55.61,83.11];
+      var map = new ol.Map({
+        layers: [raster, vector],
+        target: 'map',
+		renderer: 'canvas',
+        view: new ol.View({
+		extent: ol.proj.transformExtent(maxExtent, 'EPSG:4326', 'EPSG:3857'),
+		center: ol.proj.transform([-110.41, 60.82], 'EPSG:4326', 'EPSG:3857'),
+		
+			zoom: 3,
+			minZoom: 3,
+			maxZoom: 20
+        })
+      });
+		
+    </script>
+  </body>
+</html>
